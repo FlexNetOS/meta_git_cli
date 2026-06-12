@@ -1,0 +1,10 @@
+{
+  "schema": "handoff.context_capsule.v1",
+  "project_name": "meta_git_cli",
+  "role": "Subprocess plugin binary (meta-git) for the meta CLI that implements multi-repo git commands: recursive clone of child repos, per-repo commit, status, update, snapshots, worktrees, and SSH agent setup. Built on meta_plugin_protocol/meta_git_lib/meta_core/loop_lib as path deps to sibling workspace members.",
+  "plane": "foundation",
+  "tier": "A",
+  "northstar": "Meta makes multi-repo feel like monorepo without the downsides; the canon machinery stays green, versioned by the parent distribution.",
+  "next_command": "Plan in kb first (git kb board); mint execution cards via hf (ADR-0003)",
+  "source": "ARCHITECTURE-TRUTH.md census 2026-06-12"
+}
