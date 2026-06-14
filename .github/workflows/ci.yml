@@ -21,7 +21,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           path: meta_git_cli
 
@@ -47,10 +47,10 @@ jobs:
           printf '[workspace]\nmembers = ["meta_git_cli"]\nresolver = "2"\n\n[workspace.package]\nversion = "0.0.0"\nedition = "2021"\nlicense = "MIT"\nrepository = "https://github.com/FlexNetOS/meta"\n' > Cargo.toml
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
 
       - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae # v2
         with:
           workspaces: meta_git_cli
 
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           path: meta_git_cli
 
@@ -87,12 +87,12 @@ jobs:
           printf '[workspace]\nmembers = ["meta_git_cli"]\nresolver = "2"\n\n[workspace.package]\nversion = "0.0.0"\nedition = "2021"\nlicense = "MIT"\nrepository = "https://github.com/FlexNetOS/meta"\n' > Cargo.toml
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
         with:
           components: clippy
 
       - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae # v2
         with:
           workspaces: meta_git_cli
 
@@ -105,10 +105,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
         with:
           components: rustfmt
 
