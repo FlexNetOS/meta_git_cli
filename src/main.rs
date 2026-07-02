@@ -28,6 +28,10 @@ fn main() {
         "Pull existing repos and clone any missing repos".to_string(),
     );
     adapted.insert(
+        "setup-ssh".to_string(),
+        "Establish SSH ControlMaster connections for workspace remotes".to_string(),
+    );
+    adapted.insert(
         "snapshot".to_string(),
         "Save and restore workspace state across all repos".to_string(),
     );
@@ -59,6 +63,7 @@ fn main() {
                 "git clone".to_string(),
                 "git status".to_string(),
                 "git update".to_string(),
+                "git setup-ssh".to_string(),
                 "git commit".to_string(),
                 "git snapshot".to_string(),
                 "git snapshot create".to_string(),
@@ -85,6 +90,7 @@ fn main() {
                 examples: vec![
                     "meta git clone https://github.com/org/meta-repo.git".to_string(),
                     "meta git status".to_string(),
+                    "meta git setup-ssh".to_string(),
                     "meta git commit -m \"Update all repos\"".to_string(),
                     "meta git commit --edit              # Per-repo messages".to_string(),
                     "meta git snapshot create before-refactor".to_string(),

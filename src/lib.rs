@@ -73,6 +73,7 @@ pub fn execute_command(
         "git status" => status::execute_git_status(projects, options, cwd),
         "git clone" => clone::execute_git_clone(args, options, cwd),
         "git update" => update::execute_git_update(projects, options.dry_run, cwd),
+        "git setup-ssh" => execute_setup_ssh(options, cwd),
         "git commit" => commit::execute_git_commit(args, projects, options, cwd),
         "git snapshot" => snapshot::execute_snapshot_help(),
         "git snapshot create" => snapshot::execute_snapshot_create(args, projects, cwd),
@@ -90,6 +91,47 @@ pub fn execute_command(
         Ok(cmd_result) => cmd_result,
         Err(e) => CommandResult::Error(format!("{e}")),
     }
+}
+
+fn execute_setup_ssh(
+    options: &PluginRequestOptions,
+    cwd: &Path,
+) -> Result<CommandResult, anyhow::Error> {
+    let urls = ssh::discover_ssh_urls(cwd);
+
+    if urls.is_empty() {
+        return Ok(CommandResult::Message(
+            "No SSH remotes found in this meta workspace; nothing to set up.".to_string(),
+        ));
+    }
+
+    if options.dry_run {
+        return Ok(CommandResult::Message(format!(
+            "[DRY RUN] Would establish SSH ControlMaster connections for {} host URL(s):\n{}",
+            urls.len(),
+            urls.join("\n")
+        )));
+    }
+
+    let refs: Vec<&str> = urls.iter().map(String::as_str).collect();
+    let result = ssh_setup::establish_ssh_masters(&refs);
+
+    let message = match result {
+        ssh_setup::SshMasters::OurSockets(dir) => format!(
+            "SSH ControlMaster sockets are ready.\nGIT_SSH_COMMAND={}",
+            ssh_setup::git_ssh_command(&dir)
+        ),
+        ssh_setup::SshMasters::UserManaged => {
+            "SSH ControlMaster is already available through user-managed SSH configuration."
+                .to_string()
+        }
+        ssh_setup::SshMasters::Failed => {
+            "Failed to establish SSH ControlMaster connections for configured SSH remotes."
+                .to_string()
+        }
+    };
+
+    Ok(CommandResult::Message(message))
 }
 
 /// Check if a git command accesses remote repositories
@@ -122,7 +164,13 @@ fn build_passthrough_git_help(
     }
 
     let adapted_commands = [
-        "clone", "status", "update", "commit", "snapshot", "worktree",
+        "clone",
+        "status",
+        "update",
+        "setup-ssh",
+        "commit",
+        "snapshot",
+        "worktree",
     ];
     let git_args: Vec<String> = command_words
         .iter()
@@ -293,6 +341,10 @@ SPECIAL COMMANDS:
     Updates all repositories by cloning any missing repos and pulling the latest
     changes. Runs in parallel for efficiency.
 
+  meta git setup-ssh
+    Establishes SSH ControlMaster connections for SSH remotes in the workspace
+    and prints the reusable GIT_SSH_COMMAND when meta manages the sockets.
+
   meta git commit --edit
     Opens an editor to create different commit messages for each repo.
 
@@ -330,7 +382,7 @@ FILTERING OPTIONS:
   These meta/loop options work with all pass-through commands:
 
     --tag <tags>        Filter by project tag(s), comma-separated
-    --include-only      Only run in specified directories
+    --include      Only run in specified directories
     --exclude           Skip specified directories
     --parallel          Run commands in parallel
 
@@ -338,9 +390,10 @@ Examples:
   meta git clone https://github.com/example/meta-repo.git
   meta git status
   meta git pull --rebase
+  meta git setup-ssh
   meta git pull --tag backend
   meta git commit --edit
-  meta git checkout -b feature/new --include-only api,frontend
+  meta git checkout -b feature/new --include api,frontend
   meta git snapshot create before-upgrade
   meta git snapshot restore before-upgrade
 "#
@@ -396,7 +449,53 @@ mod tests {
         let help = get_help_text();
         assert!(help.contains("meta git clone"));
         assert!(help.contains("meta git update"));
-        assert!(!help.contains("meta git setup-ssh"));
+        assert!(help.contains("meta git setup-ssh"));
+    }
+
+    #[test]
+    fn test_setup_ssh_no_ssh_remotes_message() {
+        let temp_dir = TempDir::new().unwrap();
+        let meta_path = temp_dir.path().join(".meta");
+        std::fs::write(
+            &meta_path,
+            r#"{"projects": {"foo": "https://github.com/org/foo.git"}}"#,
+        )
+        .unwrap();
+        let options = PluginRequestOptions::default();
+
+        let result = execute_command("git setup-ssh", &[], &[], &options, temp_dir.path());
+
+        match result {
+            CommandResult::Message(message) => {
+                assert!(message.contains("No SSH remotes found"));
+            }
+            _ => panic!("expected setup-ssh message"),
+        }
+    }
+
+    #[test]
+    fn test_setup_ssh_dry_run_lists_ssh_remotes() {
+        let temp_dir = TempDir::new().unwrap();
+        let meta_path = temp_dir.path().join(".meta");
+        std::fs::write(
+            &meta_path,
+            r#"{"projects": {"foo": "git@github.com:org/foo.git"}}"#,
+        )
+        .unwrap();
+        let options = PluginRequestOptions {
+            dry_run: true,
+            ..Default::default()
+        };
+
+        let result = execute_command("git setup-ssh", &[], &[], &options, temp_dir.path());
+
+        match result {
+            CommandResult::Message(message) => {
+                assert!(message.contains("[DRY RUN]"));
+                assert!(message.contains("git@github.com:org/foo.git"));
+            }
+            _ => panic!("expected setup-ssh dry-run message"),
+        }
     }
 
     #[test]
