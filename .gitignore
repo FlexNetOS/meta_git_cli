@@ -13,3 +13,9 @@
 # Environment
 .env
 .env.local
+
+# GitKB
+.kb/.cache/
+.kb/store/
+.kb/workspace/
+.kb/workspaces/
